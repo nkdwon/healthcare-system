@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # URL do banco de dados (será configurada no .env ou no Render)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/healthcare_db")
+# Localmente usando a sua senha do pgAdmin (o @ foi codificado como %40)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:Lau%401003@localhost:5432/healthcare_db")
 
 # No Render, a URL do PostgreSQL geralmente começa com postgres://, mas o SQLAlchemy requer postgresql://
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
