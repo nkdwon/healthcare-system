@@ -25,4 +25,4 @@ app.include_router(api_router, prefix="/api")
 
 @app.get("/")
 def read_root():
-    return {"message": "Healthcare System API", "status": "online"}
+    return {"message": "Healthcare System API ready", "status": "online"}

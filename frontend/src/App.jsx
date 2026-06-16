@@ -297,7 +297,7 @@ function App() {
   return (
     <div>
       <nav className="navbar">
-        <div className="nav-brand">HEALTHCARE SYSTEM</div>
+        <div className="nav-brand">HEALTHCARE SYSTEM · PUC Minas</div>
         <div className="nav-links">
           <button className={`nav-btn ${aba === 'dashboard' ? 'active' : ''}`} onClick={() => setAba('dashboard')}>Dashboard</button>
           <button className={`nav-btn ${aba === 'profissionais' ? 'active' : ''}`} onClick={() => setAba('profissionais')}>Profissionais</button>
