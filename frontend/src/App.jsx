@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const CATEGORIAS = [
-  { value: 'MEDICO', label: 'Medico' },
-  { value: 'PSICOLOGO', label: 'Psicologo' },
+  { value: 'MEDICO', label: 'Médico' },
+  { value: 'PSICOLOGO', label: 'Psicólogo' },
   { value: 'FISIOTERAPEUTA', label: 'Fisioterapeuta' },
 ];
 
 const TIPOS_RECEITA = [
-  { value: 'REMEDIO', label: 'Remedio' },
-  { value: 'ATIVIDADE_FISICA', label: 'Atividade fisica' },
+  { value: 'REMEDIO', label: 'Remédio' },
+  { value: 'ATIVIDADE_FISICA', label: 'Atividade física' },
   { value: 'ATIVIDADE_MENTAL', label: 'Atividade mental' },
 ];
 
@@ -67,7 +68,7 @@ function App() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.detail || 'Nao foi possivel concluir a operacao');
+      throw new Error(data.detail || 'Não foi possível concluir a operação');
     }
 
     if (response.status === 204) return null;
@@ -100,7 +101,7 @@ function App() {
       setExames(examesDados);
       setProntuarios(prontuariosDados);
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -118,6 +119,7 @@ function App() {
     limparEdicao,
     nomeEntidade,
   }) => {
+    const tId = toast.loading(`Salvando ${nomeEntidade}...`);
     try {
       await apiRequest(editandoId ? `${endpoint}${editandoId}` : endpoint, {
         method: editandoId ? 'PUT' : 'POST',
@@ -126,25 +128,31 @@ function App() {
       resetForm();
       limparEdicao(null);
       await carregarDados();
-      alert(`${nomeEntidade} salvo com sucesso!`);
+      toast.success(`${nomeEntidade} salvo com sucesso!`, { id: tId });
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message, { id: tId });
     }
   };
 
   const excluirRegistro = async (endpoint, id, nomeEntidade) => {
     if (!confirm(`Excluir ${nomeEntidade}?`)) return;
 
+    const tId = toast.loading(`Excluindo ${nomeEntidade}...`);
     try {
       await apiRequest(`${endpoint}${id}`, { method: 'DELETE' });
       await carregarDados();
+      toast.success(`${nomeEntidade} excluído com sucesso!`, { id: tId });
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message, { id: tId });
     }
   };
 
   const handleTelefonePacienteChange = (event) => {
     setFPaciente({ ...fPaciente, telefone: aplicarMascaraTelefone(event.target.value) });
+  };
+
+  const handleCPFPacienteChange = (event) => {
+    setFPaciente({ ...fPaciente, cpf: aplicarMascaraCPF(event.target.value) });
   };
 
   const handleTelefoneProfissionalChange = (event) => {
@@ -216,7 +224,7 @@ function App() {
       payload: fProfissional,
       resetForm: () => setFProfissional(profissionalInicial),
       limparEdicao: setEditandoProfissionalId,
-      nomeEntidade: 'Profissional de saude',
+      nomeEntidade: 'Profissional de saúde',
     });
   };
 
@@ -256,7 +264,7 @@ function App() {
       payload: { ...fReceita, atendimento_id: Number(fReceita.atendimento_id) },
       resetForm: () => setFReceita(receitaInicial),
       limparEdicao: setEditandoReceitaId,
-      nomeEntidade: 'Receita de saude',
+      nomeEntidade: 'Receita de saúde',
     });
   };
 
@@ -280,7 +288,7 @@ function App() {
       payload: { ...fProntuario, atendimento_id: Number(fProntuario.atendimento_id) },
       resetForm: () => setFProntuario(prontuarioInicial),
       limparEdicao: setEditandoProntuarioId,
-      nomeEntidade: 'Prontuario',
+      nomeEntidade: 'Prontuário',
     });
   };
 
@@ -296,8 +304,12 @@ function App() {
 
   return (
     <div>
+      <Toaster position="top-right" />
       <nav className="navbar">
-        <div className="nav-brand">HEALTHCARE SYSTEM · PUC Minas</div>
+        <div className="nav-brand">
+          <img src="/logo.svg" alt="Logo" className="nav-logo" />
+          HEALTHCARE SYSTEM · PUC Minas
+        </div>
         <div className="nav-links">
           <button className={`nav-btn ${aba === 'dashboard' ? 'active' : ''}`} onClick={() => setAba('dashboard')}>Dashboard</button>
           <button className={`nav-btn ${aba === 'profissionais' ? 'active' : ''}`} onClick={() => setAba('profissionais')}>Profissionais</button>
@@ -305,7 +317,7 @@ function App() {
           <button className={`nav-btn ${aba === 'atendimentos' ? 'active' : ''}`} onClick={() => setAba('atendimentos')}>Atendimentos</button>
           <button className={`nav-btn ${aba === 'receitas' ? 'active' : ''}`} onClick={() => setAba('receitas')}>Receitas</button>
           <button className={`nav-btn ${aba === 'exames' ? 'active' : ''}`} onClick={() => setAba('exames')}>Exames</button>
-          <button className={`nav-btn ${aba === 'prontuarios' ? 'active' : ''}`} onClick={() => setAba('prontuarios')}>Prontuarios</button>
+          <button className={`nav-btn ${aba === 'prontuarios' ? 'active' : ''}`} onClick={() => setAba('prontuarios')}>Prontuários</button>
         </div>
       </nav>
 
@@ -314,14 +326,14 @@ function App() {
 
         {aba === 'dashboard' && (
           <>
-            <h2 className="page-title">Resumo da Clinica</h2>
+            <h2 className="page-title">Resumo da Clínica</h2>
             <div className="stats-row">
               <StatCard label="Profissionais" value={profissionais.length} />
               <StatCard label="Pacientes" value={pacientes.length} />
               <StatCard label="Atendimentos" value={atendimentos.length} />
               <StatCard label="Receitas" value={receitas.length} />
               <StatCard label="Exames" value={exames.length} />
-              <StatCard label="Prontuarios" value={prontuarios.length} />
+              <StatCard label="Prontuários" value={prontuarios.length} />
             </div>
             <div className="card">
               <h3 className="card-title">Atendimentos Recentes</h3>
@@ -332,14 +344,14 @@ function App() {
 
         {aba === 'profissionais' && (
           <>
-            <h2 className="page-title">Profissionais de Saude</h2>
+            <h2 className="page-title">Profissionais de Saúde</h2>
             <div className="card">
               <h3 className="card-title">{editandoProfissionalId ? 'Editar Profissional' : 'Cadastrar Profissional'}</h3>
               <form onSubmit={salvarProfissional}>
                 <div className="form-grid">
                   <CampoTexto label="Nome" value={fProfissional.nome} onChange={(valor) => setFProfissional({ ...fProfissional, nome: valor })} required />
                   <CampoTexto label="Telefone" value={fProfissional.telefone} onChange={(_, event) => handleTelefoneProfissionalChange(event)} />
-                  <CampoTexto label="Endereco" value={fProfissional.endereco} onChange={(valor) => setFProfissional({ ...fProfissional, endereco: valor })} />
+                  <CampoTexto label="Endereço" value={fProfissional.endereco} onChange={(valor) => setFProfissional({ ...fProfissional, endereco: valor })} />
                   <div className="form-group">
                     <label>Categoria</label>
                     <select value={fProfissional.categoria} onChange={(e) => setFProfissional({ ...fProfissional, categoria: e.target.value })}>
@@ -359,7 +371,7 @@ function App() {
               <h3 className="card-title">Profissionais Cadastrados</h3>
               <div className="table-wrapper">
                 <table>
-                  <thead><tr><th>Nome</th><th>Telefone</th><th>Endereco</th><th>Categoria</th><th>Acoes</th></tr></thead>
+                  <thead><tr><th>Nome</th><th>Telefone</th><th>Endereço</th><th>Categoria</th><th>Ações</th></tr></thead>
                   <tbody>
                     {profissionais.map((profissional) => (
                       <tr key={profissional.id}>
@@ -390,7 +402,7 @@ function App() {
               <form onSubmit={salvarPaciente}>
                 <div className="form-grid">
                   <CampoTexto label="Nome Completo" value={fPaciente.nome} onChange={(valor) => setFPaciente({ ...fPaciente, nome: valor })} required />
-                  <CampoTexto label="CPF" value={fPaciente.cpf} onChange={(valor) => setFPaciente({ ...fPaciente, cpf: valor })} required />
+                  <CampoTexto label="CPF" value={fPaciente.cpf} onChange={(_, event) => handleCPFPacienteChange(event)} required />
                   <CampoTexto label="Data de Nascimento" type="date" value={fPaciente.data_nascimento} onChange={(valor) => setFPaciente({ ...fPaciente, data_nascimento: valor })} required />
                   <CampoTexto label="Telefone" value={fPaciente.telefone} onChange={(_, event) => handleTelefonePacienteChange(event)} />
                 </div>
@@ -406,7 +418,7 @@ function App() {
               <h3 className="card-title">Pacientes Cadastrados</h3>
               <div className="table-wrapper">
                 <table>
-                  <thead><tr><th>Nome</th><th>CPF</th><th>Nascimento</th><th>Telefone</th><th>Acoes</th></tr></thead>
+                  <thead><tr><th>Nome</th><th>CPF</th><th>Nascimento</th><th>Telefone</th><th>Ações</th></tr></thead>
                   <tbody>
                     {pacientes.map((paciente) => (
                       <tr key={paciente.id}>
@@ -455,7 +467,7 @@ function App() {
                     </select>
                   </div>
                   <CampoTexto label="Data" type="date" value={fAtendimento.data_atendimento} onChange={(valor) => setFAtendimento({ ...fAtendimento, data_atendimento: valor })} required />
-                  <CampoTexto label="Horario" type="time" value={fAtendimento.horario_atendimento} onChange={(valor) => setFAtendimento({ ...fAtendimento, horario_atendimento: valor })} required />
+                  <CampoTexto label="Horário" type="time" value={fAtendimento.horario_atendimento} onChange={(valor) => setFAtendimento({ ...fAtendimento, horario_atendimento: valor })} required />
                   <div className="form-group">
                     <label>Status</label>
                     <select value={fAtendimento.status} onChange={(e) => setFAtendimento({ ...fAtendimento, status: e.target.value })}>
@@ -464,7 +476,7 @@ function App() {
                   </div>
                 </div>
                 <div className="form-group field-full">
-                  <label>Problema / descricao do atendimento</label>
+                  <label>Problema / descrição do atendimento</label>
                   <textarea rows="4" value={fAtendimento.problema_texto} onChange={(e) => setFAtendimento({ ...fAtendimento, problema_texto: e.target.value })} required />
                 </div>
                 <div className="form-actions">
@@ -488,7 +500,7 @@ function App() {
 
         {aba === 'receitas' && (
           <>
-            <h2 className="page-title">Receitas de Saude</h2>
+            <h2 className="page-title">Receitas de Saúde</h2>
             <div className="card">
               <h3 className="card-title">{editandoReceitaId ? 'Editar Receita' : 'Cadastrar Receita'}</h3>
               <form onSubmit={salvarReceita}>
@@ -508,7 +520,7 @@ function App() {
                   </div>
                 </div>
                 <div className="form-group field-full">
-                  <label>Descricao</label>
+                  <label>Descrição</label>
                   <textarea rows="4" value={fReceita.descricao} onChange={(e) => setFReceita({ ...fReceita, descricao: e.target.value })} required />
                 </div>
                 <div className="form-actions">
@@ -547,7 +559,7 @@ function App() {
                   </div>
                 </div>
                 <div className="form-group field-full">
-                  <label>Descricao</label>
+                  <label>Descrição</label>
                   <textarea rows="4" value={fExame.descricao} onChange={(e) => setFExame({ ...fExame, descricao: e.target.value })} required />
                 </div>
                 <div className="form-actions">
@@ -571,9 +583,9 @@ function App() {
 
         {aba === 'prontuarios' && (
           <>
-            <h2 className="page-title">Prontuarios</h2>
+            <h2 className="page-title">Prontuários</h2>
             <div className="card">
-              <h3 className="card-title">{editandoProntuarioId ? 'Editar Prontuario' : 'Registrar Prontuario'}</h3>
+              <h3 className="card-title">{editandoProntuarioId ? 'Editar Prontuário' : 'Registrar Prontuário'}</h3>
               <form onSubmit={salvarProntuario}>
                 <div className="form-grid">
                   <div className="form-group">
@@ -585,11 +597,11 @@ function App() {
                   </div>
                 </div>
                 <div className="form-group field-full">
-                  <label>Observacoes</label>
+                  <label>Observações</label>
                   <textarea rows="5" value={fProntuario.observacoes} onChange={(e) => setFProntuario({ ...fProntuario, observacoes: e.target.value })} required />
                 </div>
                 <div className="form-actions">
-                  <button type="submit" className="btn-submit">{editandoProntuarioId ? 'Atualizar' : 'Salvar'} Prontuario</button>
+                  <button type="submit" className="btn-submit">{editandoProntuarioId ? 'Atualizar' : 'Salvar'} Prontuário</button>
                   {editandoProntuarioId && (
                     <button type="button" className="btn-secondary" onClick={() => { setEditandoProntuarioId(null); setFProntuario(prontuarioInicial); }}>Cancelar</button>
                   )}
@@ -597,13 +609,13 @@ function App() {
               </form>
             </div>
             <RegistroSimplesTable
-              titulo="Prontuarios Cadastrados"
+              titulo="Prontuários Cadastrados"
               registros={prontuarios}
               atendimentos={atendimentos}
               campoDescricao="observacoes"
               campoExtra="data_criacao"
               onEdit={iniciarEdicaoProntuario}
-              onDelete={(prontuario) => excluirRegistro('/prontuarios/', prontuario.id, 'prontuario')}
+              onDelete={(prontuario) => excluirRegistro('/prontuarios/', prontuario.id, 'prontuário')}
             />
           </>
         )}
@@ -618,6 +630,19 @@ function aplicarMascaraTelefone(valorEntrada) {
   if (valor.length > 2) valor = `(${valor.slice(0, 2)}) ${valor.slice(2)}`;
   if (valor.length > 9) valor = `${valor.slice(0, 10)}-${valor.slice(10)}`;
   return valor;
+}
+
+function aplicarMascaraCPF(valorEntrada) {
+  let v = valorEntrada.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length > 9) {
+    return v.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2})$/, '$1.$2.$3-$4');
+  } else if (v.length > 6) {
+    return v.replace(/^(\d{3})(\d{3})(\d{1,3})$/, '$1.$2.$3');
+  } else if (v.length > 3) {
+    return v.replace(/^(\d{3})(\d{1,3})$/, '$1.$2');
+  }
+  return v;
 }
 
 function CampoTexto({ label, value, onChange, type = 'text', required = false }) {
@@ -656,9 +681,9 @@ function TabelaAtendimentos({ atendimentos, onEdit, onDelete }) {
             <th>Profissional</th>
             <th>Paciente</th>
             <th>Data</th>
-            <th>Horario</th>
+            <th>Horário</th>
             <th>Status</th>
-            {(onEdit || onDelete) && <th>Acoes</th>}
+            {(onEdit || onDelete) && <th>Ações</th>}
           </tr>
         </thead>
         <tbody>
@@ -699,7 +724,7 @@ function RegistroSimplesTable({
       <h3 className="card-title">{titulo}</h3>
       <div className="table-wrapper">
         <table>
-          <thead><tr><th>Atendimento</th><th>Descricao</th>{campoExtra && <th>Info</th>}<th>Acoes</th></tr></thead>
+          <thead><tr><th>Atendimento</th><th>Descrição</th>{campoExtra && <th>Info</th>}<th>Ações</th></tr></thead>
           <tbody>
             {registros.map((registro) => (
               <tr key={registro.id}>
