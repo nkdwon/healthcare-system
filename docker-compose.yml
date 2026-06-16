@@ -1,34 +1,38 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
-    container_name: healthcare_db
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: root
       POSTGRES_DB: healthcare_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d healthcare_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: ./backend
-    container_name: healthcare_backend
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/healthcare_db
+      DATABASE_URL: postgresql://postgres:root@db:5432/healthcare_db
     ports:
       - "8000:8000"
 
   frontend:
-    build: ./frontend
-    container_name: healthcare_frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000/api
     restart: always
     depends_on:
       - backend

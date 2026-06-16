@@ -1,23 +1,24 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-# URL do banco de dados (será configurada no .env ou no Render)
-# Localmente usando a sua senha do pgAdmin (o @ foi codificado como %40)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:Lau%401003@localhost:5432/healthcare_db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/healthcare_db",
+)
 
-# No Render, a URL do PostgreSQL geralmente começa com postgres://, mas o SQLAlchemy requer postgresql://
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()
